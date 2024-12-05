@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Pizza } from 'lucide-react';
+import AudioPlayer from './AudioPlayer';
 import { doc, setDoc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -31,10 +32,8 @@ const FloatingEmojis = ({ onEmojiClick }) => {
       };
     };
 
-    // Iniciar con algunos emojis
     setEmojis(Array(6).fill(null).map(createNewEmoji));
 
-    // Agregar nuevos emojis periódicamente
     const addInterval = setInterval(() => {
       setEmojis(current => {
         if (current.length < 10) {
@@ -44,7 +43,6 @@ const FloatingEmojis = ({ onEmojiClick }) => {
       });
     }, 2000);
 
-    // Limpiar emojis viejos
     const cleanupInterval = setInterval(() => {
       setEmojis(current => {
         if (current.length > 6) {
@@ -90,7 +88,7 @@ const ScoreDisplay = ({ points }) => (
 );
 
 const ResponsePage = () => {
-  const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
+  const [noPosition, setNoPosition] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -125,16 +123,7 @@ const ResponsePage = () => {
     };
 
     if (!initialized && typeof window !== 'undefined') {
-      const yesButton = document.getElementById('yesButton');
-      if (yesButton) {
-        const rect = yesButton.getBoundingClientRect();
-        setNoPosition({
-          x: rect.right + 16,
-          y: rect.top
-        });
-        setInitialized(true);
-      }
-
+      setInitialized(true);
       resetAndInitialize();
     }
   }, [initialized]);
@@ -182,6 +171,7 @@ const ResponsePage = () => {
       newX = Math.random() * maxX;
       newY = Math.random() * maxY;
     } while (
+      noPosition && 
       Math.abs(newX - noPosition.x) < 150 && 
       Math.abs(newY - noPosition.y) < 150
     );
@@ -212,6 +202,7 @@ const ResponsePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative">
+      <AudioPlayer />
       <FloatingEmojis onEmojiClick={handleEmojiClick} />
       <ScoreDisplay points={points} />
       
@@ -230,43 +221,41 @@ const ResponsePage = () => {
               </p>
             </div>
             
-            <div className="flex justify-center">
-              <div className="relative">
-                <button
-                  id="yesButton"
-                  onClick={handleYes}
-                  className="px-10 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 text-lg font-light hover:scale-105 transform shadow-lg hover:shadow-xl hover:shadow-emerald-200 disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="flex items-center">
-                      <span className="animate-pulse">...</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      ¡Vamos! <Pizza className="w-4 h-4" />
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
+            <div className="flex justify-center gap-4">
+              <button
+                id="yesButton"
+                onClick={handleYes}
+                className="px-10 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 text-lg font-light hover:scale-105 transform shadow-lg hover:shadow-xl hover:shadow-emerald-200 disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <span className="animate-pulse">...</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    ¡Vamos! <Pizza className="w-4 h-4" />
+                  </span>
+                )}
+              </button>
               
-            <button
-              style={{
-                position: 'fixed',
-                left: `${noPosition.x}px`,
-                top: `${noPosition.y}px`,
-                transition: 'all 0.15s ease-in-out'
-              }}
-              onClick={moveNoButton}
-              onMouseOver={moveNoButton}
-              onMouseEnter={moveNoButton}
-              onTouchStart={moveNoButton}
-              className="relative px-8 py-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-all duration-200 text-lg font-light hover:scale-105 transform shadow-md hover:shadow-lg backdrop-blur-sm moving-button"
-            >
-              <PlumbBob />
-              No
-            </button>
+              <button
+                style={noPosition ? {
+                  position: 'fixed',
+                  left: `${noPosition.x}px`,
+                  top: `${noPosition.y}px`,
+                  transition: 'all 0.15s ease-in-out'
+                } : {}}
+                onClick={moveNoButton}
+                onMouseOver={moveNoButton}
+                onMouseEnter={moveNoButton}
+                onTouchStart={moveNoButton}
+                className="relative px-8 py-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-all duration-200 text-lg font-light hover:scale-105 transform shadow-md hover:shadow-lg backdrop-blur-sm moving-button"
+              >
+                <PlumbBob />
+                No
+              </button>
+            </div>
           </>
         ) : (
           <div className="text-center">
