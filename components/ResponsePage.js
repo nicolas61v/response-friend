@@ -50,7 +50,7 @@ const FloatingEmojis = ({ onEmojiClick }) => {
         }
         return current;
       });
-    }, 8000);
+    }, 15000);
 
     return () => {
       clearInterval(addInterval);
