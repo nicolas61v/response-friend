@@ -36,7 +36,7 @@ const FloatingEmojis = ({ onEmojiClick }) => {
 
     const addInterval = setInterval(() => {
       setEmojis(current => {
-        if (current.length < 3) {
+        if (current.length < 20) {
           return [...current, createNewEmoji()];
         }
         return current;
