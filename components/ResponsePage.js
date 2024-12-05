@@ -236,7 +236,7 @@ const ResponsePage = () => {
                 </h1>
               </div>
               <p className="text-emerald-700 text-xl font-light">
-                ¿Nos vemos en Chef Burger? 🍔
+                ¿Te nace vernos en chef-burger? Luisa tambien puede ir.
               </p>
             </div>
             
@@ -273,7 +273,7 @@ const ResponsePage = () => {
                 disabled={isMoving}
               >
                 <PlumbBob />
-                No
+                Nunca
               </button>
             </div>
           </>
@@ -283,12 +283,12 @@ const ResponsePage = () => {
               <PlumbBob />
               <Pizza className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
             </div>
-            <h2 className="text-3xl font-light text-emerald-800 mb-4">¡Súper!</h2>
+            <h2 className="text-3xl font-light text-emerald-800 mb-4">gracias...</h2>
             <p className="text-emerald-700 text-lg mb-2">
-              ¡Recolectaste {points} puntos mientras jugabas! 🎮
+              ¡Mira nada mas {points} puntos, mera maquina!
             </p>
             <p className="text-emerald-500 text-sm mt-6 font-light">
-              Vamos por esas hamburguesas 
+               
               <Sparkles className="inline-block ml-2 w-4 h-4" />
             </p>
           </div>
