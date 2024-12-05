@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
+import { Sparkles, Pizza } from 'lucide-react';
 import { doc, setDoc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -17,14 +17,86 @@ const PlumbBob = () => (
   </svg>
 );
 
+const FloatingEmojis = ({ onEmojiClick }) => {
+  const [emojis, setEmojis] = useState([]);
+  const emojisList = ['🍔', '🍟', '🌮', '🍕', '🥤'];
+
+  useEffect(() => {
+    const createNewEmoji = () => {
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        emoji: emojisList[Math.floor(Math.random() * emojisList.length)],
+        left: Math.random() * 90 + 5, // 5-95%
+        points: Math.floor(Math.random() * 10) + 1,
+      };
+    };
+
+    // Iniciar con algunos emojis
+    setEmojis(Array(6).fill(null).map(createNewEmoji));
+
+    // Agregar nuevos emojis periódicamente
+    const addInterval = setInterval(() => {
+      setEmojis(current => {
+        if (current.length < 10) {
+          return [...current, createNewEmoji()];
+        }
+        return current;
+      });
+    }, 2000);
+
+    // Limpiar emojis viejos
+    const cleanupInterval = setInterval(() => {
+      setEmojis(current => {
+        if (current.length > 6) {
+          return current.slice(-6);
+        }
+        return current;
+      });
+    }, 8000);
+
+    return () => {
+      clearInterval(addInterval);
+      clearInterval(cleanupInterval);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {emojis.map((emoji) => (
+        <div
+          key={emoji.id}
+          className="absolute animate-float floating-emoji cursor-pointer pointer-events-auto"
+          style={{
+            left: `${emoji.left}%`
+          }}
+          onClick={() => {
+            onEmojiClick(emoji.points);
+            setEmojis(current => current.filter(e => e.id !== emoji.id));
+          }}
+        >
+          <span className="text-4xl hover:scale-125 transition-transform inline-block select-none">
+            {emoji.emoji}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ScoreDisplay = ({ points }) => (
+  <div className="absolute top-4 right-4 bg-emerald-500 text-white text-3xl font-bold px-6 py-3 rounded-full shadow-lg">
+    {points}
+  </div>
+);
+
 const ResponsePage = () => {
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [noClicks, setNoClicks] = useState(0);
+  const [points, setPoints] = useState(0);
 
-  // ID único para esta sesión
   const sessionId = 'eve-response';
   const interactionsRef = doc(db, 'interactions', sessionId);
   const finalResponseRef = doc(db, 'final-response', sessionId);
@@ -32,19 +104,19 @@ const ResponsePage = () => {
   useEffect(() => {
     const resetAndInitialize = async () => {
       try {
-        // Borrar la respuesta anterior y las interacciones
         await deleteDoc(finalResponseRef);
         await deleteDoc(interactionsRef);
         
-        // Inicializar nuevo estado
         await setDoc(interactionsRef, {
           noClickCount: 0,
+          points: 0,
           lastUpdated: new Date(),
           sessions: []
         });
 
         setShowSuccess(false);
         setNoClicks(0);
+        setPoints(0);
         return false;
       } catch (error) {
         console.error("Error reseteando estado:", error);
@@ -63,10 +135,23 @@ const ResponsePage = () => {
         setInitialized(true);
       }
 
-      // Resetear e inicializar el estado
       resetAndInitialize();
     }
   }, [initialized]);
+
+  const handleEmojiClick = async (emojiPoints) => {
+    const newPoints = points + emojiPoints;
+    setPoints(newPoints);
+    
+    try {
+      await updateDoc(interactionsRef, {
+        points: newPoints,
+        lastUpdated: new Date()
+      });
+    } catch (error) {
+      console.error("Error actualizando puntos:", error);
+    }
+  };
 
   const moveNoButton = async () => {
     const newCount = noClicks + 1;
@@ -81,14 +166,14 @@ const ResponsePage = () => {
         lastUpdated: new Date(),
         sessions: [...currentData.sessions, {
           timestamp: new Date(),
-          clickNumber: newCount
+          clickNumber: newCount,
+          pointsAtTime: points
         }]
       });
     } catch (error) {
       console.error("Error actualizando interacciones:", error);
     }
 
-    // Calculate new position with minimum distance from current position
     const maxX = window.innerWidth - 80;
     const maxY = window.innerHeight - 40;
     let newX, newY;
@@ -111,7 +196,8 @@ const ResponsePage = () => {
       await setDoc(finalResponseRef, {
         response: 'yes',
         timestamp: new Date(),
-        noClicksBeforeYes: noClicks
+        noClicksBeforeYes: noClicks,
+        finalPoints: points
       });
 
       setTimeout(() => {
@@ -125,14 +211,22 @@ const ResponsePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center p-4">
-      <div className="max-w-sm w-full bg-white rounded-2xl shadow-lg p-10 relative">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative">
+      <FloatingEmojis onEmojiClick={handleEmojiClick} />
+      <ScoreDisplay points={points} />
+      
+      <div className="max-w-sm w-full backdrop-blur-sm bg-white/70 rounded-3xl shadow-xl p-10 relative border border-emerald-100">
         {!showSuccess ? (
           <>
             <div className="text-center mb-10">
-              <h1 className="text-4xl font-light text-stone-800 mb-6">Eve</h1>
-              <p className="text-stone-600 text-lg font-light">
-                ¿Nos vemos en Chef Burger?
+              <div className="relative inline-block">
+                <h1 className="text-5xl font-light text-emerald-800 mb-6 relative">
+                  Eve
+                  <Sparkles className="absolute -top-4 -right-8 text-emerald-400 w-6 h-6" />
+                </h1>
+              </div>
+              <p className="text-emerald-700 text-xl font-light">
+                ¿Nos vemos en Chef Burger? 🍔
               </p>
             </div>
             
@@ -141,10 +235,18 @@ const ResponsePage = () => {
                 <button
                   id="yesButton"
                   onClick={handleYes}
-                  className="px-8 py-2.5 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors duration-200 text-sm font-light hover:scale-105 transform"
+                  className="px-10 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 text-lg font-light hover:scale-105 transform shadow-lg hover:shadow-xl hover:shadow-emerald-200 disabled:opacity-50"
                   disabled={loading}
                 >
-                  {loading ? '...' : 'Sí'}
+                  {loading ? (
+                    <span className="flex items-center">
+                      <span className="animate-pulse">...</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      ¡Vamos! <Pizza className="w-4 h-4" />
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -154,13 +256,13 @@ const ResponsePage = () => {
                 position: 'fixed',
                 left: `${noPosition.x}px`,
                 top: `${noPosition.y}px`,
-                transition: 'all 0.1s ease'
+                transition: 'all 0.15s ease-in-out'
               }}
               onClick={moveNoButton}
               onMouseOver={moveNoButton}
               onMouseEnter={moveNoButton}
               onTouchStart={moveNoButton}
-              className="relative px-8 py-2.5 bg-stone-200 text-stone-600 rounded-full hover:bg-stone-300 transition-colors duration-200 text-sm font-light hover:scale-105 transform"
+              className="relative px-8 py-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-all duration-200 text-lg font-light hover:scale-105 transform shadow-md hover:shadow-lg backdrop-blur-sm moving-button"
             >
               <PlumbBob />
               No
@@ -168,13 +270,18 @@ const ResponsePage = () => {
           </>
         ) : (
           <div className="text-center">
-            <div className="relative mb-6">
+            <div className="relative mb-8">
               <PlumbBob />
-              <Heart className="w-12 h-12 text-stone-900 mx-auto" />
+              <Pizza className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
             </div>
-            <h2 className="text-2xl font-light text-stone-800 mb-3">¡Gracias!</h2>
-            <p className="text-stone-600">Yo sabía que dirías que sí</p>
-            <p className="text-stone-400 text-sm mt-6 font-light">Nos vemos en Chef Burger</p>
+            <h2 className="text-3xl font-light text-emerald-800 mb-4">¡Súper!</h2>
+            <p className="text-emerald-700 text-lg mb-2">
+              ¡Recolectaste {points} puntos mientras jugabas! 🎮
+            </p>
+            <p className="text-emerald-500 text-sm mt-6 font-light">
+              Vamos por esas hamburguesas 
+              <Sparkles className="inline-block ml-2 w-4 h-4" />
+            </p>
           </div>
         )}
       </div>
