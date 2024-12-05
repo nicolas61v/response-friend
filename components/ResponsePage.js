@@ -20,14 +20,14 @@ const PlumbBob = () => (
 
 const FloatingEmojis = ({ onEmojiClick }) => {
   const [emojis, setEmojis] = useState([]);
-  const emojisList = ['🍔', '🍟', '🌮', '🍕', '🥤'];
+  const emojisList = ['🍔', '🍟', '🍕', '🥤','💟','👽','🤢'];
 
   useEffect(() => {
     const createNewEmoji = () => {
       return {
         id: Math.random().toString(36).substr(2, 9),
         emoji: emojisList[Math.floor(Math.random() * emojisList.length)],
-        left: Math.random() * 90 + 5, // 5-95%
+        left: Math.random() * 90 + 5,
         points: Math.floor(Math.random() * 10) + 1,
       };
     };
@@ -94,6 +94,7 @@ const ResponsePage = () => {
   const [initialized, setInitialized] = useState(false);
   const [noClicks, setNoClicks] = useState(0);
   const [points, setPoints] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
 
   const sessionId = 'eve-response';
   const interactionsRef = doc(db, 'interactions', sessionId);
@@ -132,51 +133,69 @@ const ResponsePage = () => {
     const newPoints = points + emojiPoints;
     setPoints(newPoints);
     
-    try {
-      await updateDoc(interactionsRef, {
-        points: newPoints,
-        lastUpdated: new Date()
-      });
-    } catch (error) {
+    // Optimistic update
+    updateDoc(interactionsRef, {
+      points: newPoints,
+      lastUpdated: new Date()
+    }).catch(error => {
       console.error("Error actualizando puntos:", error);
-    }
+      setPoints(points); // Revert on error
+    });
   };
 
-  const moveNoButton = async () => {
-    const newCount = noClicks + 1;
-    setNoClicks(newCount);
-
-    try {
-      const docSnap = await getDoc(interactionsRef);
-      const currentData = docSnap.data() || { sessions: [] };
-      
-      await updateDoc(interactionsRef, {
-        noClickCount: newCount,
-        lastUpdated: new Date(),
-        sessions: [...currentData.sessions, {
-          timestamp: new Date(),
-          clickNumber: newCount,
-          pointsAtTime: points
-        }]
-      });
-    } catch (error) {
-      console.error("Error actualizando interacciones:", error);
-    }
-
-    const maxX = window.innerWidth - 80;
-    const maxY = window.innerHeight - 40;
+  const getNewPosition = () => {
+    const padding = 100; // Espacio mínimo desde los bordes
+    const maxX = window.innerWidth - padding;
+    const maxY = window.innerHeight - padding;
     let newX, newY;
     
     do {
-      newX = Math.random() * maxX;
-      newY = Math.random() * maxY;
+      newX = Math.random() * (maxX - padding) + padding/2;
+      newY = Math.random() * (maxY - padding) + padding/2;
     } while (
       noPosition && 
       Math.abs(newX - noPosition.x) < 150 && 
       Math.abs(newY - noPosition.y) < 150
     );
     
-    setNoPosition({ x: newX, y: newY });
+    return { x: newX, y: newY };
+  };
+
+  const moveNoButton = () => {
+    if (isMoving) return; // Prevenir múltiples movimientos simultáneos
+    
+    setIsMoving(true);
+    const newCount = noClicks + 1;
+    setNoClicks(newCount);
+    
+    // Actualizar posición inmediatamente
+    const newPosition = getNewPosition();
+    setNoPosition(newPosition);
+
+    // Sincronizar con el servidor en segundo plano
+    const syncWithServer = async () => {
+      try {
+        const docSnap = await getDoc(interactionsRef);
+        const currentData = docSnap.data() || { sessions: [] };
+        
+        await updateDoc(interactionsRef, {
+          noClickCount: newCount,
+          lastUpdated: new Date(),
+          sessions: [...currentData.sessions, {
+            timestamp: new Date(),
+            clickNumber: newCount,
+            pointsAtTime: points
+          }]
+        });
+      } catch (error) {
+        console.error("Error actualizando interacciones:", error);
+      } finally {
+        setIsMoving(false);
+      }
+    };
+
+    // Ejecutar la sincronización en segundo plano
+    syncWithServer();
   };
 
   const handleYes = async () => {
@@ -251,6 +270,7 @@ const ResponsePage = () => {
                 onMouseEnter={moveNoButton}
                 onTouchStart={moveNoButton}
                 className="relative px-8 py-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-all duration-200 text-lg font-light hover:scale-105 transform shadow-md hover:shadow-lg backdrop-blur-sm moving-button"
+                disabled={isMoving}
               >
                 <PlumbBob />
                 No
