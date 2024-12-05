@@ -287,6 +287,9 @@ const ResponsePage = () => {
             <p className="text-emerald-700 text-lg mb-2">
               ¡Mira nada mas {points} puntos, mera maquina!
             </p>
+            <p className="text-emerald-700 text-lg mb-2">
+              Nos vemos mañana a las 7:00 PM en chef-burger.
+            </p>
             <p className="text-emerald-500 text-sm mt-6 font-light">
                
               <Sparkles className="inline-block ml-2 w-4 h-4" />
