@@ -20,7 +20,7 @@ const PlumbBob = () => (
 
 const FloatingEmojis = ({ onEmojiClick }) => {
   const [emojis, setEmojis] = useState([]);
-  const emojisList = ['🍔', '🍟', '🍕', '🥤','💟','👽','🤢'];
+  const emojisList = ['🍔', '🍝', '🍕', '🥤','💟','🍣','🍙'];
 
   useEffect(() => {
     const createNewEmoji = () => {
