@@ -209,6 +209,11 @@ const ResponsePage = () => {
         finalPoints: points
       });
 
+      // Cambiar la canción cuando se presiona "Si"
+      if (typeof window !== 'undefined' && window.changeSongOnSuccess) {
+        window.changeSongOnSuccess();
+      }
+
       setTimeout(() => {
         setShowSuccess(true);
         setLoading(false);
@@ -236,7 +241,7 @@ const ResponsePage = () => {
                 </h1>
               </div>
               <p className="text-emerald-700 text-xl font-light">
-                ¿Te nace vernos en chef-burger? Luisa tambien puede ir.
+                ¿Te nace vernos en chef-burger? Luisa tambien.
               </p>
             </div>
             
@@ -253,7 +258,7 @@ const ResponsePage = () => {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    ¡Vamos! <Pizza className="w-4 h-4" />
+                    ¡Si! <Pizza className="w-4 h-4" />
                   </span>
                 )}
               </button>
@@ -273,7 +278,7 @@ const ResponsePage = () => {
                 disabled={isMoving}
               >
                 <PlumbBob />
-                Nunca
+                No
               </button>
             </div>
           </>
@@ -281,7 +286,11 @@ const ResponsePage = () => {
           <div className="text-center">
             <div className="relative mb-8">
               <PlumbBob />
-              <Pizza className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
+              <img 
+                src="/gif1.gif"
+                alt="Celebration"
+                className="w-40 h-40 mx-auto object-cover" 
+              />
             </div>
             <h2 className="text-3xl font-light text-emerald-800 mb-4">gracias...</h2>
             <p className="text-emerald-700 text-lg mb-2">

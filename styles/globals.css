@@ -20,6 +20,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Animación original para emojis flotantes */
 @keyframes float {
   0% {
     transform: translateY(120vh);
@@ -37,16 +38,145 @@ body {
   }
 }
 
+/* Animación para el efecto glitch */
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-2px, 2px);
+    opacity: 0.9;
+  }
+  40% {
+    transform: translate(-2px, -2px);
+    opacity: 0.8;
+  }
+  60% {
+    transform: translate(2px, 2px);
+    opacity: 0.9;
+  }
+  80% {
+    transform: translate(2px, -2px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(0);
+    opacity: 1;
+  }
+}
+
+/* Animación para las partículas de error */
+@keyframes errorParticle {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Animación de ping mejorada para la pelota */
+@keyframes enhancedPing {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Clases principales */
 .animate-float {
   animation: float 8s linear infinite;
 }
 
-/* Para asegurar que los emojis estén por encima de otros elementos */
 .floating-emoji {
   z-index: 50;
 }
 
-/* Asegurar que el botón "No" esté por encima de los emojis */
 .moving-button {
   z-index: 100;
+}
+
+/* Estilos para el error y la pelota */
+.error-ball-container {
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+
+.glitch-text {
+  animation: glitch 1s infinite;
+  font-family: monospace;
+  color: #ff3333;
+  text-shadow: 
+    2px 0 #00ffff,
+    -2px 0 #ff00ff;
+  letter-spacing: 2px;
+}
+
+.error-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: errorParticle 2s ease-out infinite;
+}
+
+.ball-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 20px;
+  background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%);
+  border-radius: 50%;
+}
+
+.ball-ping {
+  animation: enhancedPing 2s ease-in-out infinite;
+}
+
+/* Transiciones suaves para elementos de la página */
+.page-transition {
+  transition: all 0.5s ease-in-out;
+}
+
+/* Efectos de hover mejorados */
+.hover-glow:hover {
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+/* Efecto de brillo para la línea de rebote */
+.bounce-line {
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(239, 68, 68, 0.3) 20%,
+    rgba(239, 68, 68, 0.5) 50%,
+    rgba(239, 68, 68, 0.3) 80%,
+    transparent 100%
+  );
+  box-shadow: 
+    0 0 10px rgba(239, 68, 68, 0.3),
+    0 0 20px rgba(239, 68, 68, 0.2),
+    0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .glitch-text,
+  .error-particle,
+  .ball-ping {
+    animation: none;
+  }
 }
